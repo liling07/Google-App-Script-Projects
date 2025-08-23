@@ -1,6 +1,7 @@
+//september 2024
 //essentially we had a folder of score report pdfs for individual students who can be identified by unique IDs, we then had a google slide template for certificates; 
 //this program pulls the score report from the folder + generates a certificate and sends it to them :) 
-/// was actually one of my first projects :D completed in september 2024! and.. took like 7-8 hours cuz i was slow and didn't know what i was doing
+/// was actually one of my first projects :D and.. took like 7-8 hours cuz i was slow and didn't know what i was doing
 
 
 function autoEmails() {

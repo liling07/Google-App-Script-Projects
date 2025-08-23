@@ -1,3 +1,4 @@
+//august 2024
 //scraped the scioly wiki to create a foundation for my fossil binder .. :) 
 // this was kinda simple tbh 
 

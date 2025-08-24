@@ -1,3 +1,4 @@
+//late august 2025
 //also worked off of Stephen's code + logic from last year
 //helping produce schedules based on a spreadsheet of data
 //main changes: added "batches" + triggers to run after each batch bc I ran into run-time errors T-T

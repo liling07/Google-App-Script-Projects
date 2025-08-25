@@ -4,8 +4,8 @@
 //also changed how it filled the pdf so that the final emailed version was an editable pdf & ppl didn't have to resubmit the form for minor edits!
 //note if you do use this, should probably build a trigger!
 
-const folderId = "1KStt_HkikCK68Un8TpuL8SVe1QMgBlYo";
-const templateFileId = '1mpd-u2LyzmFeD9YRocb-M3Zeg8nqodq6'; // PDF template file ID
+const folderId = "{redacted}";
+const templateFileId = '{redacted}'; // PDF template file ID
 
 function formHandler(e) {
   const person = buildPersonFromResponse(e.response);

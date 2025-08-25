@@ -18,8 +18,8 @@ function createNewGoogleDocs() {
   const scriptProps = PropertiesService.getScriptProperties();
   const startIdx = Number(scriptProps.getProperty('cursor') || 0);
 
-  const templateFile = DriveApp.getFileById('1jBULO1Sfpg7z3AGHCfqiZ_0aoSb50UVNWg4JPBDPVto');
-  const destinationFolder = DriveApp.getFolderById('1TV0U_E6EcJWQ4znMzO6wzRuFx1hiu57q');
+  const templateFile = DriveApp.getFileById('{redacted}');
+  const destinationFolder = DriveApp.getFolderById('{redacted}');
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet2');
   const rows = sheet.getDataRange().getValues();
   const groups = [];

@@ -291,3 +291,269 @@ function buildReplaceArray(person) {
   Logger.log(JSON.stringify(replaceArray, null, 2));
   return replaceArray;
 }
+
+
+/* Stephen's code 
+const folderId = "1eEPGMzx--cHeoUOr6z3NMhN4U4tt8vPv";
+const templateFileId = '16aRk8imNTq9b4UolueJd5Htr61_bZNN8'; // PDF template file ID
+// const folderId = "1eEPGMzx--cHeoUOr6z3NMhN4U4tt8vPv"; const fileId = '16aRk8imNTq9b4UolueJd5Htr61_bZNN8';
+/**
+ * Main trigger for form submissions.
+ * Builds the person object and generates & sends the personalized PDF.
+ */
+function formHandler(e) {
+  const person = buildPersonFromResponse(e.response);
+  replaceAndSend(person);
+}
+
+/**
+ * Generates the PDF, saves it to Drive, and emails it to the respondent.
+ */
+function replaceAndSend(person) {
+  const pdfBlob = DriveApp.getFileById(templateFileId).getBlob();
+  const pdfForm = new PdfForm();
+  const replaceArray = buildReplaceArray(person);
+
+  pdfForm.setValues(pdfBlob, replaceArray)
+    .then(updatedBlob => {
+      const fileName = `${person.firstName} ${person.lastName}'s Registration 2025-26.pdf`;
+
+      
+      DriveApp.getFolderById(folderId)
+        .createFile(updatedBlob)
+        .setName(fileName);
+
+      
+      const namedBlob = updatedBlob.setName(fileName);
+
+      
+      MailApp.sendEmail({
+        to: person.contact1.email,
+        subject: "Completed Payton Registration Documents",
+        body: "Please print out the forms, complete them in their entirety, and return them before May 9th.",
+        name: "Walter Payton College Prep",
+        attachments: [ namedBlob ]
+      });
+    })
+    .catch(error => {
+      Logger.log('Failed to generate or send PDF: ' + error);
+      throw new Error('Failed to generate or send PDF: ' + error);
+    });
+}
+/**
+ * Parses the FormResponse into a Person object for easy data handling.
+ */
+function buildPersonFromResponse(formResponse) {
+  const form = FormApp.getActiveForm();
+  const items = form.getItems();
+  const responses = formResponse.getItemResponses();
+  const responseMap = new Map();
+
+  responses.forEach(itemResponse => {
+    responseMap.set(itemResponse.getItem().getId(), itemResponse.getResponse());
+  });
+
+  const responseArray = items
+    .map(item => {
+      const type = item.getType();
+      if (type === FormApp.ItemType.PAGE_BREAK || type === FormApp.ItemType.SECTION_HEADER) {
+        return null;
+      }
+      return responseMap.get(item.getId()) || "";
+    })
+    .filter(value => value !== null);
+
+  return new Person(responseArray);
+}
+
+/**
+ * Represents a form respondent and their data.
+ */
+function Person(responseArray) {
+  let i = 0;
+  this.firstName = responseArray[i++];
+  this.lastName = responseArray[i++];
+  this.middleName = responseArray[i++];
+  this.dob = formatDateString(responseArray[i++]);
+  this.gender = responseArray[i++];
+  this.address = responseArray[i++];
+  this.city = responseArray[i++];
+  this.state = responseArray[i++];
+  this.zip = responseArray[i++];
+  this.email = responseArray[i++];
+  this.almaMater = responseArray[i++];
+  this.siblingsAtPayton = responseArray[i++];
+  this.grade = responseArray[i++];
+  this.studentId = responseArray[i++];
+  this.confidential1 = responseArray[i++];
+  this.confidential2 = responseArray[i++] === "Yes";
+
+  this.contact1 = createContact(responseArray, i);
+  i += 19;
+
+  this.contact2Exists = responseArray[i++] === "Yes";
+  this.contact2 = this.contact2Exists ? createContact(responseArray, i) : {};
+  i += this.contact2Exists ? 19 : 0;
+
+  this.emergencyContact = {
+    name: responseArray[i++],
+    address: responseArray[i++],
+    phone: responseArray[i++],
+    relationship: responseArray[i++]
+  };
+
+  this.doctor = {
+    fullName: responseArray[i++],
+    phone: responseArray[i++],
+    address: responseArray[i++]
+  };
+
+  this.studentHealthInsurance = responseArray[i++];
+  this.medicalId = responseArray[i++];
+  this.allKidsApplicationInterest = responseArray[i++] === "Yes";
+  this.parentInArmedForces = responseArray[i++] === "Yes";
+  this.parentIsDeployed = responseArray[i++] === "Yes";
+  this.paytonFOPAuthorization = responseArray[i++] === "Yes";
+  this.paytonFOPContactListAuthorization = responseArray[i++] === "Yes";
+
+  this.calculatorPurchase = "";
+  this.studentVentraCardPurchase = "";
+}
+
+/**
+ * Helper to build a contact object from the response array.
+ */
+function createContact(array, index) {
+  return {
+    firstName: array[index++],
+    lastName: array[index++],
+    email: array[index++],
+    relationship: array[index++],
+    permissions: array[index++],
+    address: array[index++],
+    city: array[index++],
+    state: array[index++],
+    zip: array[index++],
+    homePhone: array[index++],
+    cellPhone: array[index++],
+    employerName: array[index++],
+    employerAddress: array[index++],
+    workPhone: array[index++],
+    preferredPhone: array[index++],
+    language: array[index++],
+    volunteerInterest: array[index++],
+    volunteerNoncommittalInterest: array[index++],
+    volunteerCategory: array[index++]
+  };
+}
+
+/**
+ * Formats a date string (YYYY-MM-DD) into MM/dd/yyyy.
+ 
+function formatDateString(dateString) {
+  const date = new Date(dateString);
+  return Utilities.formatDate(date, Session.getScriptTimeZone(), "MM/dd/yyyy");
+}
+
+/**
+ * Builds the replace array for PdfForm.setValues(), including text and checkbox mappings.
+ 
+function buildReplaceArray(person) {
+  const textMappings = [
+    { keys: [15, 66, 156, 163, 170, 185, 45, 105, 114, 126, 175], value: person.firstName },
+    { keys: [14, 65, 155, 162, 169, 184, 41, 104, 113, 125, 154], value: person.lastName },
+    { keys: [10, 51, 2, 99, 102, 149], value: `${person.firstName} ${person.middleName} ${person.lastName}` },
+    { keys: [16, 67, 157, 164, 171, 186, 46, 106, 115, 127, 176], value: person.middleName },
+    { keys: [], value: person.middleName.slice(0, 1) },
+    { keys: [19, 172, 116, 128], value: person.gender },
+    { keys: [18, 72, 174, 187, 47, 117, 129, 148, 177], value: person.dob },
+    { keys: [12, 64, 159, 166, 191, 98, 100, 108, 119, 131, 150], value: person.studentId },
+    { keys: [52, 190, 97, 103, 120, 132], value: person.grade },
+    { keys: [73, 161, 168, 121, 133], value: person.advisory },
+    { keys: [32, 53, 68, 109, 143], value: person.address },
+    { keys: [33, 54, 69, 144], value: person.city },
+    { keys: [34, 55, 70, 146], value: person.state },
+    { keys: [35, 56, 71, 110, 147], value: person.zip },
+    { keys: [], value: "" },
+    { keys: [], value: person.county },
+    { keys: [111], value: person.contact1.firstName },
+    { keys: [112], value: person.contact1.lastName },
+    { keys: [57, 75, 188, 1, 48, 122, 134, 178], value: `${person.contact1.firstName} ${person.contact1.lastName}` },
+    { keys: [58, 137, 123, 136, 180], value: person.contact1.cellPhone },
+    { keys: [40, 74, 138], value: person.contact1.homePhone },
+    { keys: [139], value: person.contact1.workPhone },
+    { keys: [59, 81, 124, 135, 179], value: person.contact1.email },
+    { keys: [76], value: person.contact1.relationship },
+    { keys: [], value: person.contact1.address },
+    { keys: [83], value: person.contact1.language },
+    { keys: [85], value: person.emergencyContact.name },
+    { keys: [88], value: person.emergencyContact.address },
+    { keys: [87], value: person.emergencyContact.phone },
+    { keys: [86], value: person.emergencyContact.relationship },
+    { keys: [], value: formatDateString(new Date().toISOString().slice(0, 10)) },
+    { keys: [11, 63, 158, 165, 173, 189, 96, 107, 118, 130, 151, 152], value: "Walter Payton College Prep" },
+    { keys: [], value: "60610" },
+    { keys: [153], value: "1034 N. Wells St" },
+    { keys: [160, 167], value: "15" },
+    { keys: [95, 145], value: person.medicalId },
+    { keys: [89], value: person.doctor.fullName },
+    { keys: [90], value: person.doctor.phone },
+    { keys: [91], value: person.doctor.address }
+  ];
+
+  const checkboxMappings = [
+    { keys: [96], value: person.confidential1 === "in a car/park/other public place" },
+    { keys: [97], value: person.confidential1 === "doubled-up" },
+    { keys: [98], value: person.confidential1 === "in a hotel/motel" },
+    { keys: [99], value: person.confidential1 === "in a shelter" },
+    { keys: [100], value: person.confidential1 === "in transitional housing" },
+    { keys: [101], value: person.confidential2 },
+    { keys: [102], value: !person.confidential2 },
+    { keys: [107], value: person.contact1.permissions.includes("Lives With") },
+    { keys: [108], value: person.contact1.permissions.includes("Gets Mailings") },
+    { keys: [109], value: person.contact1.permissions.includes("Emergency") },
+    { keys: [110], value: person.contact1.permissions.includes("Permission to Pickup") },
+    { keys: [145], value: person.studentHealthInsurance === "Illinois Medical Card/All Kids" },
+    { keys: [146], value: person.studentHealthInsurance === "No Insurance" },
+    { keys: [147], value: person.studentHealthInsurance === "Private/Employer Health Insurance" },
+    { keys: [150], value: person.parentInArmedForces },
+    { keys: [151], value: !person.parentInArmedForces },
+    { keys: [152], value: person.parentIsDeployed },
+    { keys: [154], value: !person.parentIsDeployed }
+  ];
+
+  // Include contact2 mappings if a second contact exists
+  if (person.contact2Exists) {
+    textMappings.push(
+      { keys: [60, 77], value: `${person.contact2.firstName} ${person.contact2.lastName}` },
+      { keys: [78], value: person.contact2.relationship },
+      { keys: [61, 140], value: person.contact2.cellPhone },
+      { keys: [141], value: person.contact2.homePhone },
+      { keys: [142], value: person.contact2.workPhone },
+      { keys: [62, 82], value: person.contact2.email },
+      { keys: [84], value: person.contact2.language }
+    );
+    checkboxMappings.push(
+      { keys: [111], value: person.contact2.permissions.includes("Lives With") },
+      { keys: [112], value: person.contact2.permissions.includes("Gets Mailings") },
+      { keys: [113], value: person.contact2.permissions.includes("Emergency") },
+      { keys: [114], value: person.contact2.permissions.includes("Permission to Pickup") }
+    );
+  }
+
+  // Flatten mappings into replace array
+  const replaceArray = [];
+  textMappings.forEach(mapping => {
+    mapping.keys.forEach(key => {
+      replaceArray.push({ name: `Text${key}`, value: mapping.value });
+    });
+  });
+  checkboxMappings.forEach(mapping => {
+    mapping.keys.forEach(key => {
+      replaceArray.push({ name: `Check Box${key}`, value: mapping.value });
+    });
+  });
+
+  return replaceArray;
+}
+*/

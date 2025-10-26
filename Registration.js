@@ -36,8 +36,7 @@ function replaceAndSend(person) {
       MailApp.sendEmail({
         to: person.contact1.email,
         subject: "Completed Payton Registration Documents",
-        body: `Your registration file is ready! Please view and print it using this link: ${fileUrl}. Please note that several fields are not filled out, specifically: *insert*. Additionally, you need to manually sign and date each place that requires it. We look forward to seeing you at registration :) ` ,
-        name: "Walter Payton College Prep"
+        body: `Your registration file is ready here: ${fileUrl}. Please print out the forms, complete them in their entirety, and return them on your designated registration day.` ,
       });
 
       Logger.log("Email sent successfully");
@@ -300,7 +299,7 @@ const templateFileId = '16aRk8imNTq9b4UolueJd5Htr61_bZNN8'; // PDF template file
 /**
  * Main trigger for form submissions.
  * Builds the person object and generates & sends the personalized PDF.
- */
+ 
 function formHandler(e) {
   const person = buildPersonFromResponse(e.response);
   replaceAndSend(person);
@@ -308,7 +307,7 @@ function formHandler(e) {
 
 /**
  * Generates the PDF, saves it to Drive, and emails it to the respondent.
- */
+ 
 function replaceAndSend(person) {
   const pdfBlob = DriveApp.getFileById(templateFileId).getBlob();
   const pdfForm = new PdfForm();
@@ -342,7 +341,7 @@ function replaceAndSend(person) {
 }
 /**
  * Parses the FormResponse into a Person object for easy data handling.
- */
+ 
 function buildPersonFromResponse(formResponse) {
   const form = FormApp.getActiveForm();
   const items = form.getItems();
@@ -368,7 +367,7 @@ function buildPersonFromResponse(formResponse) {
 
 /**
  * Represents a form respondent and their data.
- */
+ 
 function Person(responseArray) {
   let i = 0;
   this.firstName = responseArray[i++];
@@ -422,7 +421,7 @@ function Person(responseArray) {
 
 /**
  * Helper to build a contact object from the response array.
- */
+ 
 function createContact(array, index) {
   return {
     firstName: array[index++],

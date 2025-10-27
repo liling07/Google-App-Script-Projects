@@ -52,7 +52,6 @@ function createNewGoogleDocs() {
     bigBody = bigDoc.getBody();
   }
 
-  // --- process a batch
   let sectionsOnPage = Number(scriptProps.getProperty('sectionsOnPage') || 0);
   const endIdx = Math.min(startIdx + BATCH_SIZE, groups.length);
   for (let idx = startIdx; idx < endIdx; idx++) {
@@ -108,13 +107,12 @@ function createNewGoogleDocs() {
       sectionsOnPage = 0;
     }
 
-    // cleanup copy
+
     try { DriveApp.getFileById(tempId).setTrashed(true); } catch (_) {}
   }
 
   bigDoc.saveAndClose();
 
-  // --- decide whether to continue
   if (endIdx < groups.length) {
     scriptProps.setProperty('cursor', String(endIdx));
     scriptProps.setProperty('sectionsOnPage', String(sectionsOnPage));
@@ -127,21 +125,108 @@ function createNewGoogleDocs() {
   }
 }
 
-// helper: schedule another run in ~1 minute
 function scheduleContinuation_() {
   ScriptApp.getProjectTriggers()
     .filter(t => t.getHandlerFunction() === 'createNewGoogleDocs')
     .forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('createNewGoogleDocs')
     .timeBased()
-    .after(60 * 1000) // 1 minute
+    .after(60 * 1000) 
     .create();
 }
 
-// small helpers
 function rep(body, key, val) {
   const pattern = '\\{\\{' + escapeRegex(key) + '\\}\\}';
   body.replaceText(pattern, (val ?? '').toString());
 }
 function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function safeFileName(s) { return String(s).replace(/[\\/:*?"<>|]/g, '_').slice(0, 100); }
+
+/*
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  const menu = ui.createMenu('AutoFill Docs');
+  menu.addItem('Create New Docs', 'createNewGoogleDocs');
+  menu.addToUi();
+}
+
+function createNewGoogleDocs() {
+  const googleDocTemplate = DriveApp.getFileById('11IUtuslgICqilwVBHMn9utnIjnGxfAYdfG7cgvtlrc4');
+  const destinationFolder = DriveApp.getFolderById('19Unyjuhh-8jQp_urk0Kklv6qSazaEGJq');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Test');
+  const rows = sheet.getDataRange().getValues();
+
+  let currentStudent = '';
+  let studentRows = [];
+
+  const bigDoc = DocumentApp.create('All Students Details');
+  const body = bigDoc.getBody(); 
+  const bigDocFile = DriveApp.getFileById(bigDoc.getId());
+  destinationFolder.addFile(bigDocFile);
+  DriveApp.getRootFolder().removeFile(bigDocFile);
+
+  rows.forEach(function(row, index) {
+    if (index === 0 || !row[0]) return;
+
+    if (row[0] !== currentStudent) {
+      if (studentRows.length > 0) {
+
+        processStudentRows(studentRows, googleDocTemplate, body);
+      }
+
+      currentStudent = row[0];
+      studentRows = [];
+    }
+    
+    studentRows.push(row);
+  });
+
+
+  if (studentRows.length > 0) {
+    processStudentRows(studentRows, googleDocTemplate, body);
+  }
+
+  bigDoc.saveAndClose();
+  const url = bigDoc.getUrl();
+  Logger.log(url);
+}
+
+function processStudentRows(studentRows, template, body) {
+
+  const tempDoc = template.makeCopy().getId();
+  const tempBody = DocumentApp.openById(tempDoc).getBody();;
+
+  tempBody.replaceText(`{{Name}}`, studentRows[0][0]);
+  tempBody.replaceText(`{{Grade}}`, studentRows[0][1]);
+  tempBody.replaceText(`{{Advisory}}`, studentRows[0][2]);
+
+
+  studentRows.forEach((row, index) => {
+    let periodIndex = index + 1;
+    if (periodIndex === 9) periodIndex = "A"; // handle "A" period
+
+    tempBody.replaceText(`{{Per${periodIndex}}}`, row[3] || '');
+    tempBody.replaceText(`{{Clssrm${periodIndex}}}`, row[4] || '');
+    tempBody.replaceText(`{{Description${periodIndex}}}`, row[5] || '');
+    tempBody.replaceText(`{{TName${periodIndex}}}`, row[6] || '');
+  });
+
+  // append template to the big doc
+  const numChildren = tempBody.getNumChildren();
+  for (let i = 0; i < numChildren; i++) {
+    const element = tempBody.getChild(i).copy();
+    
+    // check the type of element and append it as such
+    if (element.getType() == DocumentApp.ElementType.PARAGRAPH) {
+      body.appendParagraph(element);
+    } else if (element.getType() == DocumentApp.ElementType.TABLE) {
+      body.appendTable(element);
+    } else if (element.getType() == DocumentApp.ElementType.LIST_ITEM) {
+      body.appendListItem(element);
+    } else {
+      body.appendParagraph(element.asText().getText());
+    }
+  }
+  //DriveApp.getFileById(tempDoc).setTrashed(true);
+}
+*/
